@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
-import 'package:provider/provider.dart';
-import 'cart_provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+//screens
+import 'auth/auth_wrapper.dart';
+
+// Provider
+// import 'providers/cart_provider.dart';
+
+void main() async {
   // runApp(const MyApp());
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (context) => CartProvider()), 
-      ],
-      child: MyApp(),
-    ),
-  );
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
+  const MyApp({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: LoginPage());
+    return MaterialApp(
+      title: 'Login App',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: AuthWrapper(),
+      debugShowCheckedModeBanner: false,
+    );
   }
 }

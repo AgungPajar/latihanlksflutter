@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "91148137515",
+    "project_id": "flutterlogin-b2c23",
+    "storage_bucket": "flutterlogin-b2c23.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:91148137515:android:c1d45c83cc14edc9a2e66e",
+        "android_client_info": {
+          "package_name": "com.example.ppp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtoqKvwNsuOULyq9E3BcjsdmDwf2as0S0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
