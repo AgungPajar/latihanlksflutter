@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 
 //screens
 import 'auth/auth_wrapper.dart';
+import 'auth/login.dart';
 
 // Provider
 // import 'providers/cart_provider.dart';
@@ -15,13 +16,18 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Login App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: AuthWrapper(),
+      // home: AuthWrapper(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => AuthWrapper(),
+        '/login': (context) => LoginPage(),
+      },
       debugShowCheckedModeBanner: false,
     );
   }

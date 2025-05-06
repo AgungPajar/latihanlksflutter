@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class MenuPage extends StatelessWidget {
   final User? user = FirebaseAuth.instance.currentUser;
 
+  MenuPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -15,7 +17,9 @@ class MenuPage extends StatelessWidget {
             icon: Icon(Icons.logout),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
+              if (context.mounted) {
               Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+              }
             },
           )
         ],

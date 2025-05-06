@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+// import 'package:flutter/services.dart';
 // import 'login.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -14,7 +14,8 @@ class _RegisPageState extends State<RegisterPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -38,9 +39,11 @@ class _RegisPageState extends State<RegisterPage> {
         if (userCredential.user != null) {
           // TODO: Simpan username ke Firestore atau database lainnya
 
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Registerasi berhasil!")));
+          if (context.mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text("Registrasi berhasil!")));
+          }
 
           Navigator.pop(context);
         }
@@ -55,13 +58,17 @@ class _RegisPageState extends State<RegisterPage> {
           message = e.message ?? 'error tidak diktehui';
         }
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
+        }
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Registrasi gagal: $e")));
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Registrasi gagal: $e")));
+        }
       } finally {
         setState(() {
           _isLoading = false;
@@ -186,10 +193,10 @@ class _RegisPageState extends State<RegisterPage> {
                   ? CircularProgressIndicator()
                   : ElevatedButton(
                     onPressed: _register,
-                    child: Text("Daftar"),
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(double.infinity, 40),
                     ),
+                    child: Text("Daftar"),
                   ),
               TextButton(
                 onPressed: () {

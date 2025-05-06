@@ -7,10 +7,10 @@ class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  LoginPageState createState() => LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -36,10 +36,12 @@ class _LoginPageState extends State<LoginPage> {
         );
 
         if (userCredential.user != null) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => MenuPage()),
-          );
+          if (context.mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => MenuPage()),
+            );
+          }
         }
       } on FirebaseAuthException catch (e) {
         String message = "Terjadi kesalahan";
@@ -51,13 +53,17 @@ class _LoginPageState extends State<LoginPage> {
           message = e.message ?? "Error";
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message))
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
+        }
       } catch (e) {
+        if (context.mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("Login gagal: $e")));
+        }
       } finally {
         setState(() {
           _isLoading = false;
@@ -143,10 +149,10 @@ class _LoginPageState extends State<LoginPage> {
                   ? CircularProgressIndicator()
                   : ElevatedButton(
                     onPressed: _login,
-                    child: Text("Login"),
                     style: ElevatedButton.styleFrom(
                       minimumSize: Size(double.infinity, 40),
                     ),
+                    child: Text("Login"),
                   ),
               TextButton(
                 onPressed: _register,
