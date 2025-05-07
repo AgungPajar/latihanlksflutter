@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
@@ -39,12 +40,19 @@ class _RegisPageState extends State<RegisterPage> {
         if (userCredential.user != null) {
           // TODO: Simpan username ke Firestore atau database lainnya
 
+          String uid = userCredential.user!.uid;
+
+          await FirebaseFirestore.instance.collection("users").doc(uid).set({
+            "username": _usernameController.text,
+            "email": email,
+            "createdAt": FieldValue.serverTimestamp(),
+          });
+
           if (context.mounted) {
             ScaffoldMessenger.of(
               context,
-            ).showSnackBar(SnackBar(content: Text("Registrasi berhasil!")));
+            ).showSnackBar(SnackBar(content: Text("Registrasi Berhasil")));
           }
-
           Navigator.pop(context);
         }
       } on FirebaseAuthException catch (e) {
