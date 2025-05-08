@@ -30,7 +30,7 @@ class CartItem {
       id: id,
       name: map['name'],
       price: map['price'],
-      quantity: map['quantity'],
+      quantity: map['quantity'] ?? 1,
     );
   }
 
@@ -41,16 +41,20 @@ class CartItem {
 
 class CartProvider with ChangeNotifier {
   final List<CartItem> _cartItems = [];
-  final CollectionReference cartRef = FirebaseFirestore.instance
-      .collection('cart')
-      .doc(FirebaseAuth.instance.currentUser?.uid)
-      .collection('items');
-
-  List<CartItem> get cartItems => _cartItems;
+  late CollectionReference cartRef;
 
   CartProvider() {
-    loadFromFirestore();
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      cartRef = FirebaseFirestore.instance
+          .collection('cart')
+          .doc(uid)
+          .collection('items');
+      loadFromFirestore();
+    }
   }
+
+  List<CartItem> get cartItems => _cartItems;
 
   void addItem(DocumentSnapshot product) {
     final productId = product.id;
@@ -63,8 +67,7 @@ class CartProvider with ChangeNotifier {
     );
 
     if (existingItemIndex >= 0) {
-      final existingItem = _cartItems[existingItemIndex];
-      existingItem.incrementQuantity();
+      _cartItems[existingItemIndex].quantity += 1;
     } else {
       final newItem = CartItem(
         id: productId,
@@ -72,13 +75,26 @@ class CartProvider with ChangeNotifier {
         price: productPrice,
         quantity: 1,
       );
+      _cartItems.add(newItem);
     }
     notifyListeners();
     saveToFirestore();
   }
 
   void removeItem(String productId) {
-    _cartItems.removeWhere((item) => item.id == productId);
+    final existingItemIndex = _cartItems.indexWhere(
+      (item) => item.id == productId,
+    );
+
+    if (existingItemIndex >= 0) {
+      final existingItem = _cartItems[existingItemIndex];
+
+      if (existingItem.quantity > 1) {
+        existingItem.quantity--;
+      } else {
+        _cartItems.removeAt(existingItemIndex);
+      }
+    }
     notifyListeners();
     saveToFirestore();
   }
@@ -90,13 +106,20 @@ class CartProvider with ChangeNotifier {
     final batch = FirebaseFirestore.instance.batch();
 
     // menghapus item lama
-    final snapshot = await cartRef.get();
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('cart')
+            .doc(uid)
+            .collection('items')
+            .get();
+
     for (var doc in snapshot.docs) {
       batch.delete(doc.reference);
     }
 
     for (var item in _cartItems) {
-      batch.set(cartRef.doc(item.id), item.toMap());
+      final DocumentReference docRef = cartRef.doc(item.id);
+      batch.set(docRef, item.toMap());
     }
 
     await batch.commit();
@@ -107,7 +130,13 @@ class CartProvider with ChangeNotifier {
     if (uid == null) return;
 
     // menghapus item lama
-    final snapshot = await cartRef.get();
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('cart')
+            .doc(uid)
+            .collection('items')
+            .get();
+
     _cartItems.clear();
 
     for (var doc in snapshot.docs) {

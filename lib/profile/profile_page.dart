@@ -5,6 +5,7 @@ import '../utils/app_bottom_bar.dart';
 
 class ProfilePage extends StatelessWidget {
   final User? user = FirebaseAuth.instance.currentUser;
+  // ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +20,27 @@ class ProfilePage extends StatelessWidget {
                   .doc(user?.uid)
                   .get(),
           builder: (context, snapshot) {
+            if (user == null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Silakan login terlebih dahulu",
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/login');
+                      },
+                      child: Text("Login Sekarang"),
+                    ),
+                  ],
+                ),
+              );
+            }
+
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator());
             }

@@ -19,7 +19,7 @@ class _MenuPageState extends State<MenuPage> {
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
-    
+
     return Scaffold(
       appBar: AppBar(title: Text("Jar's Market")),
       body: Column(
@@ -63,12 +63,13 @@ class _MenuPageState extends State<MenuPage> {
                     final productId = product.id;
                     final productName = product['name'];
                     final productPrice = product['price'];
-                    
+
                     final cartItem = cartProvider.cartItems.firstWhere(
                       (item) => item.id == productId,
-                      orElse: () => CartItem(id: '', name: '', price: 0, quantity: 0)
+                      orElse:
+                          () =>
+                              CartItem(id: '', name: '', price: 0, quantity: 0),
                     );
-
 
                     return Card(
                       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -91,7 +92,7 @@ class _MenuPageState extends State<MenuPage> {
                             ), // Spasi antara gambar dan informasi produk
                             // Informasi Produk
                             Expanded(
-                              child: Container(
+                              child: SizedBox(
                                 height: 120, // Atur tinggi maksimum kolom
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +171,7 @@ class _MenuPageState extends State<MenuPage> {
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
               onPressed: () {
-                // nanti
+                Navigator.pushNamed(context, '/cart');
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
