@@ -171,7 +171,7 @@ class _MenuPageState extends State<MenuPage> {
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/cart');
+                // Navigator.pushNamed(context, '/payment');
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

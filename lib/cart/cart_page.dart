@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ppp/providers/cart_provider.dart';
+import 'package:provider/provider.dart';
 import '../utils/app_bottom_bar.dart'; // Import custom taskbar
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -26,68 +28,63 @@ class CartPage extends StatelessWidget {
       );
     }
 
+    final cartProvider = Provider.of<CartProvider>(context);
+    // final totalPrice = cartProvider.getTotalPrice();
+
     return Scaffold(
       appBar: AppBar(title: Text("Keranjang Belanja")),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-          .collection('cart')
-          .doc(uid)
-          .collection('items')
-          .snapshots(),
+        stream:
+            FirebaseFirestore.instance
+                .collection('cart')
+                .doc(uid)
+                .collection('items')
+                .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator(),);
+            return Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text("Keranjang kosong"),);
+            return Center(child: Text("Keranjang kosong"));
           }
 
           List<QueryDocumentSnapshot> cartItems = snapshot.data!.docs;
 
-          return ListView.builder(
-            itemCount: cartItems.length,
-            itemBuilder: (context, index) {
-              var item = cartItems[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  child: Icon(Icons.shopping_cart),
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: cartItems.length,
+                  itemBuilder: (context, index) {
+                    var item = cartItems[index];
+                    return ListTile(
+                      leading: CircleAvatar(child: Icon(Icons.shopping_cart)),
+                      title: Text(item['name']),
+                      subtitle: Text("Rp. ${item['price'] * item['quantity']}"),
+                      trailing: Text("${item['quantity']}"),
+                    );
+                  },
                 ),
-                title: Text(item['name']),
-                subtitle: Text("Rp. ${item['price'] * item['quantity']}"),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.remove_circle_outline),
-                      onPressed: () {
-                        FirebaseFirestore.instance
-                          .collection('cart')
-                          .doc(uid)
-                          .collection('items')
-                          .doc(item.id)
-                          .update({'quantity': FieldValue.increment(-1)});
-                      },
-                    ),
-                    Text("${item['quantity']}"),
-                    IconButton(
-                      icon: Icon(Icons.add_circle_outline),
-                      onPressed: () {
-                        FirebaseFirestore.instance
-                          .collection('cart')
-                          .doc(uid)
-                          .collection('items')
-                          .doc(item.id)
-                          .update({'quantity': FieldValue.increment(1)});
-                      },
-                    )
-                  ],
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Navigator.pushNamed(context, '/payment');
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Bayar Sekarang"),
+                      Text("Rp. ${cartProvider.getTotalPrice()}"),
+                    ],
+                  ),
                 ),
-              );
-            },
+              ),
+            ],
           );
-        }
+        },
       ),
-
 
       bottomNavigationBar: AppBottomBar(
         onHomePressed: () {
