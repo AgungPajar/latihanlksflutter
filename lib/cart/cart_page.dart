@@ -32,7 +32,6 @@ class CartPage extends StatelessWidget {
     // final totalPrice = cartProvider.getTotalPrice();
 
     return Scaffold(
-      appBar: AppBar(title: Text("Keranjang Belanja")),
       body: StreamBuilder<QuerySnapshot>(
         stream:
             FirebaseFirestore.instance
@@ -88,13 +87,13 @@ class CartPage extends StatelessWidget {
 
       bottomNavigationBar: AppBottomBar(
         onHomePressed: () {
-          Navigator.pushNamed(context, '/menu');
+          Navigator.pushReplacementNamed(context, '/menu');
         },
         onCartPressed: () {
           // Tetap di halaman keranjang
         },
         onProfilePressed: () {
-          Navigator.pushNamed(context, '/profile');
+          Navigator.pushReplacementNamed(context, '/profile');
         },
       ),
     );

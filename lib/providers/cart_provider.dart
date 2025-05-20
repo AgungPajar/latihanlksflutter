@@ -140,7 +140,7 @@ class CartProvider with ChangeNotifier {
     _cartItems.clear();
 
     for (var doc in snapshot.docs) {
-      final item = CartItem.fromMap(doc.id, doc.data() as Map<String, dynamic>);
+      final item = CartItem.fromMap(doc.id, doc.data());
       _cartItems.add(item);
     }
 

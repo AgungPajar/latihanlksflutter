@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import '../providers/cart_provider.dart';
+// import '../providers/cart_provider.dart';
 
 //screens
 import 'auth/auth_wrapper.dart';
@@ -11,7 +11,7 @@ import 'cart/cart_page.dart';
 import 'profile/profile_page.dart';
 
 // Provider
-// import 'providers/cart_provider.dart';
+import '../providers/cart_provider.dart';
 
 void main() async {
   // runApp(const MyApp());
@@ -19,11 +19,9 @@ void main() async {
   await Firebase.initializeApp();
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (context) => CartProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (context) => CartProvider())],
       child: MyApp(),
-    )
+    ),
   );
 }
 

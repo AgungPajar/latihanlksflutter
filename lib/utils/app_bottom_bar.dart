@@ -8,11 +8,11 @@ class AppBottomBar extends StatelessWidget {
   final void Function()? onProfilePressed;
 
   const AppBottomBar({
-    Key? key,
+    super.key,
     this.onHomePressed,
     this.onCartPressed,
     this.onProfilePressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

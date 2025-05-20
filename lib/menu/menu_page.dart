@@ -21,7 +21,7 @@ class _MenuPageState extends State<MenuPage> {
     final cartProvider = Provider.of<CartProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text("Jar's Market")),
+      appBar: AppBar(title: Text("Jar's Market"), leading: null),
       body: Column(
         children: [
           // Pencarian
@@ -189,10 +189,10 @@ class _MenuPageState extends State<MenuPage> {
               //asdads
             },
             onCartPressed: () {
-              Navigator.pushNamed(context, '/cart');
+              Navigator.pushReplacementNamed(context, '/cart');
             },
             onProfilePressed: () {
-              Navigator.pushNamed(context, '/profile');
+              Navigator.pushReplacementNamed(context, '/profile');
             },
           ),
         ],
