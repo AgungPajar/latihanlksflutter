@@ -16,9 +16,9 @@ class BalanceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: TextStyle(fontSize: 14),),
+            Text(title, style: TextStyle(fontSize: 12),),
             SizedBox(height: 8,),
-            Text(amount, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+            Text(amount, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
           ],
         ),
       ),
