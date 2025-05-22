@@ -56,6 +56,14 @@ class CartProvider with ChangeNotifier {
 
   List<CartItem> get cartItems => _cartItems;
 
+  int getQuantity(String productId) {
+    final cartItem = _cartItems.firstWhere(
+      (item) => item.id == productId,
+      orElse: () => CartItem(id: '', name: '', price: 0, quantity: 0),
+    );
+    return cartItem.quantity;
+  }
+
   void addItem(DocumentSnapshot product) {
     final productId = product.id;
     final productName = product['name'];
@@ -67,15 +75,16 @@ class CartProvider with ChangeNotifier {
     );
 
     if (existingItemIndex >= 0) {
-      _cartItems[existingItemIndex].quantity += 1;
+      _cartItems[existingItemIndex].quantity++;
     } else {
-      final newItem = CartItem(
-        id: productId,
-        name: productName,
-        price: productPrice,
-        quantity: 1,
+      _cartItems.add(
+        CartItem(
+          id: productId,
+          name: productName,
+          price: productPrice,
+          quantity: 1,
+        ),
       );
-      _cartItems.add(newItem);
     }
     notifyListeners();
     saveToFirestore();

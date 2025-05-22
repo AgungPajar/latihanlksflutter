@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:ppp/menu/edit_profile_page.dart';
+import 'package:ppp/menu/product_detail_page.dart';
 import 'package:provider/provider.dart';
 
 //screens
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => ProfilePage(),
         '/settings': (context) => SettingsPage(),
         '/edit-profile': (context) => EditProfilePage(),
+        '/product-detail': (context) => ProductDetailPage(),
       },
       debugShowCheckedModeBanner: false,
     );
