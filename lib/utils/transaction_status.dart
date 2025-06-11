@@ -4,8 +4,7 @@ class TransactionStatus extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const TransactionStatus({Key? key, required this.icon, required this.label})
-    : super(key: key);
+  const TransactionStatus({super.key, required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {

@@ -1,194 +1,210 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../utils/app_bottom_bar.dart';
-import '../utils/transaction_status.dart';
-import '../utils/balance_card.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:provider/provider.dart';
 
-class ProfilePage extends StatelessWidget {
+// Providers
+import '../providers/auth_provider.dart';
+
+// Widgets
+import '../utils/app_bottom_bar.dart';
+
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("silakan login terlebih dahulu"),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/');
-              },
-              child: Text("Login Sekarang"),
-            ),
-          ],
-        ),
-      );
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  bool _isLoading = true;
+  Map<String, dynamic>? userData;
+
+  Future<void> fetchProfile(BuildContext context) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    if (authProvider.token == null) {
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
     }
 
+    String token = authProvider.token!;
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://lks.makeredu.id/auth/profile'), 
+        headers: {
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body)['data'];
+
+        setState(() {
+          userData = responseData;
+          _isLoading = false;
+        });
+      } else if (response.statusCode == 401) {
+        authProvider.clearToken();
+        Navigator.pushReplacementNamed(context, '/login');
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal memuat profil")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Terjadi kesalahan: $e")),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchProfile(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("Profil Pengguna"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              authProvider.clearToken();
+
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: FutureBuilder<DocumentSnapshot>(
-            future:
-                FirebaseFirestore.instance
-                    .collection("users")
-                    .doc(user.uid)
-                    .get(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              }
-
-              if (!snapshot.hasData || !snapshot.data!.exists) {
-                return Center(child: Text("Tidak ada data pengguna"));
-              }
-
-              var userData = snapshot.data!.data() as Map<String, dynamic>;
-
-              return ListView(
-                physics: BouncingScrollPhysics(), // Agar smooth scroll
-                children: [
-                  // Header Profil
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundImage: NetworkImage(
-                          userData['profileImageUrl'] ??
-                              'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHhIplIVO-YexrO8Xc_X2m2ZAt_B-y9LX4kA&s',
+          child: _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : userData == null
+                  ? Center(child: Text("Tidak ada data profil"))
+                  : ListView(
+                      physics: BouncingScrollPhysics(),
+                      children: [
+                        // Informasi Profil
+                        Card(
+                          elevation: 3,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Nama Lengkap",
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                                Text(userData!['fullname'] ?? '-'),
+                                SizedBox(height: 8),
+                                Text(
+                                  "Username",
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                                Text(userData!['username'] ?? '-'),
+                                SizedBox(height: 8),
+                                Text(
+                                  "Alamat",
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                                Text(userData!['address'] ?? '-'),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+
+                        SizedBox(height: 24),
+
+                        // Status Transaksi (Dummy)
+                        Text(
+                          "Transaksi",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            Text(
-                              "${userData['username']}",
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            ElevatedButton(
-                              onPressed: () {},
-                              child: Text("Sambungkan E-Wallet"),
-                            ),
+                            _buildTransactionStatus(Icons.payment, "Bayar"),
+                            _buildTransactionStatus(Icons.local_shipping, "Diproses"),
+                            _buildTransactionStatus(Icons.check_circle, "Dikirim"),
+                            _buildTransactionStatus(Icons.star, "Ulasan"),
                           ],
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.settings),
-                        onPressed: () {
-                          // Navigasi ke halaman pengaturan
-                          Navigator.pushNamed(context, '/settings');
-                        },
-                      ),
-                    ],
-                  ),
 
-                  // Transaksi
-                  SizedBox(height: 24),
-                  Text(
-                    "Transaksi",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      TransactionStatus(icon: Icons.payment, label: "Bayar"),
-                      TransactionStatus(
-                        icon: Icons.local_shipping,
-                        label: "Diproses",
-                      ),
-                      TransactionStatus(
-                        icon: Icons.check_circle,
-                        label: "Dikirim",
-                      ),
-                      TransactionStatus(icon: Icons.star, label: "Ulasan"),
-                    ],
-                  ),
+                        SizedBox(height: 24),
 
-                  // Saldo & Points
-                  SizedBox(height: 24),
-                  Text(
-                    "Saldo & Points",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        child: BalanceCard(title: "Saldo", amount: "Rp0"),
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: BalanceCard(
-                          title: "Koin",
-                          amount: "Rp0",
+                        // Saldo & Points (Placeholder)
+                        Text(
+                          "Saldo & Points",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: BalanceCard(
-                          title: "Type",
-                          amount: "Premium",
+                        SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildBalanceCard("Saldo", "Rp0"),
+                            SizedBox(width: 8),
+                            _buildBalanceCard("Koin", "100"),
+                            SizedBox(width: 8),
+                            _buildBalanceCard("Type", "Premium"),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-
-                  // Rekomendasi Produk
-                  SizedBox(height: 24),
-                  Text(
-                    "Rekomendasi Untuk Anda",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 16),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 16 / 9,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
+                      ],
                     ),
-                    itemCount: 4,
-                    itemBuilder: (context, index) {
-                      return Card(
-                        elevation: 2,
-                        child: Image.network(
-                          "https://i.pinimg.com/originals/f7/6d/44/f76d445d12cf0efed588a0fa0a4178ab.jpg",
-                          fit: BoxFit.cover,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              );
-            },
-          ),
         ),
       ),
-      // Taskbar
       bottomNavigationBar: AppBottomBar(
         onHomePressed: () {
-          Navigator.pushNamed(context, '/menu');
+          Navigator.pushReplacementNamed(context, '/menu');
         },
         onCartPressed: () {
-          Navigator.pushNamed(context, '/cart');
+          Navigator.pushReplacementNamed(context, '/cart');
         },
         onProfilePressed: () {
-          // Navigator.pushNamed(context, '/profile');
+          // Tetap di halaman profile
         },
+      ),
+    );
+  }
+
+  Widget _buildTransactionStatus(IconData icon, String label) {
+    return Column(
+      children: [
+        Icon(icon, size: 32, color: Colors.blue),
+        SizedBox(height: 8),
+        Text(label),
+      ],
+    );
+  }
+
+  Widget _buildBalanceCard(String title, String amount) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.grey[200],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: TextStyle(fontSize: 16)),
+            SizedBox(height: 8),
+            Text(amount, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
       ),
     );
   }

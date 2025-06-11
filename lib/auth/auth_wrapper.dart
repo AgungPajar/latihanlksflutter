@@ -1,29 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../menu/menu_page.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../auth/login.dart';
+import '../menu/menu_page.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        // if (!context.mounted) return Container();
+    final auth = Provider.of<AuthProvider>(context);
 
-        if (snapshot.connectionState == ConnectionState.active) {
-          User? user = snapshot.data;
-          if (user != null) {
-            return MenuPage();
-          } else {
-            return LoginPage();
-          }
-        }
-
-        return Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-    );
+    if (auth.isAuthenticated) {
+      return MenuPage(); // Arahkan ke menu utama jika sudah login
+    } else {
+      return LoginPage(); // Jika belum login, arahkan ke halaman login
+    }
   }
 }

@@ -4,8 +4,7 @@ class BalanceCard extends StatelessWidget {
   final String title;
   final String amount;
 
-  const BalanceCard({Key? key, required this.title, required this.amount})
-    : super(key: key);
+  const BalanceCard({super.key, required this.title, required this.amount});
 
   @override
   Widget build(BuildContext context) {

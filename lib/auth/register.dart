@@ -1,8 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-// import 'package:flutter/services.dart';
-// import 'login.dart';
+import 'package:http/http.dart' as http; // Pastikan package http sudah diinstal
+import 'dart:convert';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -13,16 +11,18 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisPageState extends State<RegisterPage> {
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _fullnameController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // x-api-key akan diberikan saat lomba dimulai
+  final String apiKey = "YOUR_X_API_KEY"; // Ganti nanti saat lomba
+  final String registerUrl = "https://lks.makeredu.id/auth/register"; 
 
   void _register() async {
     if (_formKey.currentState?.validate() ?? false) {
@@ -30,53 +30,58 @@ class _RegisPageState extends State<RegisterPage> {
         _isLoading = true;
       });
 
-      String email = _emailController.text.trim();
-      String password = _passwordController.text;
+      final Map<String, dynamic> body = {
+        "username": _usernameController.text.trim(),
+        "fullname": _fullnameController.text,
+        "address": _addressController.text,
+        "password": _passwordController.text,
+      };
 
       try {
-        UserCredential userCredential = await _auth
-            .createUserWithEmailAndPassword(email: email, password: password);
+        final response = await http.post(
+          Uri.parse(registerUrl),
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+          },
+          body: jsonEncode(body),
+        );
 
-        if (userCredential.user != null) {
-          // TODO: Simpan username ke Firestore atau database lainnya
+        final responseData = jsonDecode(response.body);
 
-          String uid = userCredential.user!.uid;
-
-          await FirebaseFirestore.instance.collection("users").doc(uid).set({
-            "username": _usernameController.text,
-            "email": email,
-            "createdAt": FieldValue.serverTimestamp(),
-          });
-
-          if (context.mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text("Registrasi Berhasil")));
+        if (response.statusCode == 201 || response.statusCode == 200) {
+          // Registrasi berhasil
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Registrasi berhasil")),
+          );
+          Navigator.pop(context); // Kembali ke halaman login
+        } else if (response.statusCode == 409) {
+          // Username sudah ada
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("${responseData['message']}")),
+          );
+        } else if (response.statusCode == 400) {
+          // Validasi gagal
+          final List<dynamic> errors = responseData['data']['validation'];
+          String errorMessage = "Validasi gagal:\n";
+          for (var error in errors) {
+            errorMessage += "- $error\n";
           }
-          Navigator.pop(context);
-        }
-      } on FirebaseAuthException catch (e) {
-        String message = 'Terjadi kesalahan';
 
-        if (e.code == 'weak-password') {
-          message = 'Password terlalu lemah';
-        } else if (e.code == 'email-alredy-in-user') {
-          message = 'email tidak valid';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage)),
+          );
         } else {
-          message = e.message ?? 'error tidak diktehui';
-        }
-
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(message)));
+          // Server error
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Registrasi gagal: ${responseData['message']}")),
+          );
         }
       } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Registrasi gagal: $e")));
-        }
+        // Error network / exception
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e")),
+        );
       } finally {
         setState(() {
           _isLoading = false;
@@ -103,23 +108,28 @@ class _RegisPageState extends State<RegisterPage> {
                   if (value == null || value.isEmpty) {
                     return "Username tidak boleh kosong";
                   }
-                  if (value.length < 3) {
-                    return "Username Minimal 3 karakter";
+                  return null;
+                },
+              ),
+              SizedBox(height: 12),
+              TextFormField(
+                controller: _fullnameController,
+                decoration: InputDecoration(labelText: "Nama Lengkap"),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Nama lengkap tidak boleh kosong";
                   }
                   return null;
                 },
               ),
               SizedBox(height: 12),
               TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(labelText: "Email"),
-                keyboardType: TextInputType.emailAddress,
+                controller: _addressController,
+                decoration: InputDecoration(labelText: "Alamat"),
+                maxLines: 3,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return "Email tidak boleh kosong";
-                  }
-                  if (!value.contains("@")) {
-                    return "Email tidak valid";
+                    return "Alamat harus diisi";
                   }
                   return null;
                 },
@@ -131,9 +141,7 @@ class _RegisPageState extends State<RegisterPage> {
                   labelText: "Password",
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -148,7 +156,7 @@ class _RegisPageState extends State<RegisterPage> {
                     return "Password tidak boleh kosong";
                   }
                   if (value.length < 4) {
-                    return "Password tidak valid";
+                    return "Password minimal 4 karakter";
                   }
                   return null;
                 },
@@ -159,9 +167,7 @@ class _RegisPageState extends State<RegisterPage> {
                   labelText: "Konfirmasi Password",
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
                     ),
                     onPressed: () {
                       setState(() {
@@ -173,7 +179,7 @@ class _RegisPageState extends State<RegisterPage> {
                 obscureText: _obscurePassword,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return "Ulangi password anda";
+                    return "Ulangi password";
                   }
                   if (value != _passwordController.text) {
                     return "Password tidak sama";
@@ -193,19 +199,19 @@ class _RegisPageState extends State<RegisterPage> {
                     },
                   ),
                   const SizedBox(width: 4),
-                  const Text("Tampilkan Passowrd"),
+                  const Text("Tampilkan Password"),
                 ],
               ),
               SizedBox(height: 8),
               _isLoading
                   ? CircularProgressIndicator()
                   : ElevatedButton(
-                    onPressed: _register,
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 40),
+                      onPressed: _register,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(double.infinity, 40),
+                      ),
+                      child: Text("Daftar"),
                     ),
-                    child: Text("Daftar"),
-                  ),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);

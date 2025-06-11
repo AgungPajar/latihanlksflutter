@@ -1,27 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:ppp/menu/edit_profile_page.dart';
-import 'package:ppp/menu/product_detail_page.dart';
 import 'package:provider/provider.dart';
 
-//screens
-import 'auth/auth_wrapper.dart';
+// Screens
 import 'auth/login.dart';
+import 'auth/register.dart';
 import 'menu/menu_page.dart';
-import 'menu/settings_page.dart';
-import 'cart/cart_page.dart';
+import 'invoice/invoice_page.dart';
 import 'profile/profile_page.dart';
 
-// Provider
-import '../providers/cart_provider.dart';
+// Providers
+import 'providers/auth_provider.dart';
+import 'providers/cart_provider.dart';
 
-void main() async {
-  // runApp(const MyApp());
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+void main() {
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (context) => CartProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+      ],
       child: MyApp(),
     ),
   );
@@ -29,22 +26,19 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Login App',
+      title: 'LKS Mart Mobile',
       theme: ThemeData(primarySwatch: Colors.blue),
-      // home: AuthWrapper(),
       initialRoute: '/',
       routes: {
-        '/': (context) => AuthWrapper(),
-        '/login': (context) => LoginPage(),
+        '/': (context) => LoginPage(),
+        '/register': (context) => RegisterPage(),
         '/menu': (context) => MenuPage(),
-        '/cart': (context) => CartPage(),
+        '/invoice': (context) => InvoicePage(),
         '/profile': (context) => ProfilePage(),
-        '/settings': (context) => SettingsPage(),
-        '/edit-profile': (context) => EditProfilePage(),
-        '/product-detail': (context) => ProductDetailPage(),
       },
       debugShowCheckedModeBanner: false,
     );

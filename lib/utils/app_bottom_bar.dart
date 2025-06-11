@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+
+// Providers
+import '../../providers/cart_provider.dart';
 
 class AppBottomBar extends StatelessWidget {
   final void Function()? onHomePressed;
@@ -16,17 +18,18 @@ class AppBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String? userId = FirebaseAuth.instance.currentUser?.uid;
+    final cart = Provider.of<CartProvider>(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Garis atas
+        // Garis pembatas
         Container(
           height: 1,
           color: Colors.grey[300],
         ),
-        // Taskbar
+
+        // Taskbar bawah
         BottomAppBar(
           color: Colors.transparent,
           elevation: 0,
@@ -41,51 +44,15 @@ class AppBottomBar extends StatelessWidget {
                     icon: Icon(Icons.shopping_cart),
                     onPressed: onCartPressed,
                   ),
-                  StreamBuilder<QuerySnapshot>(
-                    stream:
-                        userId != null
-                            ? FirebaseFirestore.instance
-                                .collection("cart")
-                                .doc(userId)
-                                .collection("items")
-                                .snapshots()
-                            : const Stream<QuerySnapshot>.empty(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        int count = snapshot.data!.docs.length;
-                        return Positioned(
-                          top: 0,
-                          right: 0,
-                          child: CircleAvatar(
-                            radius: 10,
-                            backgroundColor: Colors.red,
-                            child: Text(
-                              "$count",
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        );
-                      } else if (snapshot.hasError) {
-                        return Container();
-                      }
-
-                      return Positioned(
-                        top: 0,
-                        right: 0,
-                        child: CircleAvatar(
-                          radius: 10,
-                          backgroundColor: Colors.red,
-                          child: Text(
-                            "0",
-                            style: TextStyle(fontSize: 10, color: Colors.white),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  if (cart.totalItem > 0)
+                    CircleAvatar(
+                      radius: 10,
+                      backgroundColor: Colors.red,
+                      child: Text(
+                        "${cart.totalItem}",
+                        style: TextStyle(fontSize: 10, color: Colors.white),
+                      ),
+                    ),
                 ],
               ),
               IconButton(icon: Icon(Icons.person), onPressed: onProfilePressed),
